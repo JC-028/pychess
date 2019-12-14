@@ -1,0 +1,105 @@
+#!/usr/bin/python3
+# dumb chess engine and NICSP client
+from chess import* # get chess library
+import random, time, os, socket, sys # get random, time, os, socket, and sys libraries
+board=Board() # initiate board
+moveNo=1 # set move number
+abc=['a','b','c','d','e','f','g','h']
+xboard=False
+def blo(string):
+	exec('return b"'+str(string)+'"')
+os.system('clear')
+print('''       PyChess
+  -----OPTIONS-----
+1. play on server
+2. play against CPU
+  -----------------''')
+choice=input('> ')
+print('  -----------------')
+if choice == '1':
+	connect=True
+else:
+	connect=False
+user=input('Username > ')
+os.system('clear')
+print(board)
+while not (board.is_checkmate() and connect): # loop until checkmate
+	move=input('White ('+str(moveNo)+') : ').replace('usermove ','') # get user move
+	if move == 'xboard':
+		if input('') == 'protover 2':
+			print('''feature done=0
+feature analyze=1
+feature colors=0
+feature draw=1
+feature ics=1
+feature myname="PyChess engine"
+feature name=1
+feature pause=0
+feature ping=1
+feature playother=1
+feature reuse=1
+feature san=0
+feature setboard=1
+feature sigint=0
+feature sigterm=0
+feature time=1
+feature usermove=1
+feature variants="normal"
+feature done=1
+''')
+		xboard=True
+	elif move == 'nopost' or move == 'hard' or move == 'new' or move == 'st 20':
+		pass
+	else:
+		if xboard:
+			print('\r')
+		legal=Move.from_uci(move) in board.legal_moves
+		while (not move[3] == '8' and move[0] == move[2]) and not legal:
+			move=input('White ('+str(moveNo)+') : ') # get user move
+			legal=Move.from_uci(move) in board.legal_moves
+		board.push(Move.from_uci(move)) # push move
+		if not xboard:
+			print(board) # display board
+		time.sleep(1)
+		legal=False
+		while not legal: # this loop determines the computer's move
+			move=''
+			random.shuffle(abc)
+			move+=abc[0]+str(random.randint(1,8))
+			random.shuffle(abc)
+			move+=abc[0]+str(random.randint(1,8))
+			legal=Move.from_uci(move) in board.legal_moves
+		board.push(Move.from_uci(move)) # push move
+		if not xboard:
+			os.system('clear')
+			print(board) # display board
+			print()
+		print('My move is : '+move) # display computer's move
+		moveNo+=1 # increase moves by 1
+else:
+	host='bear-Latitude-D630'
+	port=5050
+	sock=socket.socket()
+	sock.connect((host,port))
+	color=sock.recv(1024)
+	if color == b'ERR [1]':
+		print('game is under way')
+		sys.exit()
+	while not board.is_checkmate():
+		if color == b'White':
+			move=input('White('+moveNo+'): ')
+			sock.send(blo(move))
+			board.push(Move.from_uci(move))
+			move=str(sock.recv(1024))
+			move=move.replace("b'",'')
+			move=move.replace("'",'')
+			board.push(Move.from_uci(move))
+		if color == b'Black':
+			move=str(sock.recv(1024))
+			move=move.replace("b'",'')
+			move=move.replace("'",'')
+			board.push(Move.from_uci(move))
+			move=input('White('+moveNo+'): ')
+			sock.send(blo(move))
+			board.push(Move.from_uci(move))
+print('checkmate!')
