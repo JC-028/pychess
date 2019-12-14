@@ -1,0 +1,48 @@
+#!/usr/bin/python3
+# NICSP server for PyChess
+from chess import*
+import socket, threading
+board=Board()
+players=0
+move='a0a0'
+thread=[]
+def blo(string):
+	exec('return b"'+str(string)+'"')
+def game(con):
+	global board
+	global players
+	global move
+	if not players == 2:
+		players+=1
+		if players == 2:
+			sock.send(b'Black')
+			while not board.is_checkmate():
+				while move == m:
+					pass
+				con.send(blo(move))
+				move=con.recv(1024)
+				m=move
+				board.push(Move.from_uci(move))
+		else:
+			sock.send(b'White')
+			while not players == 2:
+				pass
+			while not board.is_checkmate():
+				move=con.recv(1024)
+				m=move
+				board.push(Move.from_uci(move))
+				while move == m:
+					pass
+				con.send(blo(move))
+	else:
+		sock.send(b'ERR [1]')
+sock=socket.socket()
+host=socket.gethostname()
+port=5050
+sock.bind((host,port))
+sock.listen(4)
+con,addr=sock.accept()
+print('client connected IP: '+str(addr))
+thread.append(threading.thread(target=game, args=(con))
+thread[-0].start()
+
